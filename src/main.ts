@@ -1,60 +1,136 @@
 import './style.css'
-import heroImg from './assets/hero.png'
-import typescriptLogo from './assets/typescript.svg'
-import viteLogo from './assets/vite.svg'
-import { setupCounter } from './counter.ts'
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-<section id="center">
-  <div class="hero">
-    <img src="${heroImg}" class="base" width="170" height="179">
-    <img src="${typescriptLogo}" class="framework" alt="TypeScript logo"/>
-    <img src="${viteLogo}" class="vite" alt="Vite logo" />
-  </div>
-  <div>
-    <h1>Get started</h1>
-    <p>Edit <code>src/main.ts</code> and save to test <code>HMR</code></p>
-  </div>
-  <button id="counter" type="button" class="counter"></button>
-</section>
+import * as THREE from 'three'
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
-<div class="ticks"></div>
+// --------------------------------------------------
+// 1. Сцена
+// --------------------------------------------------
 
-<section id="next-steps">
-  <div id="docs">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#documentation-icon"></use></svg>
-    <h2>Documentation</h2>
-    <p>Your questions, answered</p>
-    <ul>
-      <li>
-        <a href="https://vite.dev/" target="_blank">
-          <img class="logo" src="${viteLogo}" alt="" />
-          Explore Vite
-        </a>
-      </li>
-      <li>
-        <a href="https://www.typescriptlang.org" target="_blank">
-          <img class="button-icon" src="${typescriptLogo}" alt="">
-          Learn more
-        </a>
-      </li>
-    </ul>
-  </div>
-  <div id="social">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#social-icon"></use></svg>
-    <h2>Connect with us</h2>
-    <p>Join the Vite community</p>
-    <ul>
-      <li><a href="https://github.com/vitejs/vite" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#github-icon"></use></svg>GitHub</a></li>
-      <li><a href="https://chat.vite.dev/" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#discord-icon"></use></svg>Discord</a></li>
-      <li><a href="https://x.com/vite_js" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#x-icon"></use></svg>X.com</a></li>
-      <li><a href="https://bsky.app/profile/vite.dev" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#bluesky-icon"></use></svg>Bluesky</a></li>
-    </ul>
-  </div>
-</section>
+const scene = new THREE.Scene()
 
-<div class="ticks"></div>
-<section id="spacer"></section>
-`
+scene.background = new THREE.Color(0xf4f4f4)
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+// --------------------------------------------------
+// 2. Камера
+// --------------------------------------------------
+
+const camera = new THREE.PerspectiveCamera(
+  45,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  100
+)
+
+camera.position.set(4, 3, 5)
+
+// --------------------------------------------------
+// 3. Renderer
+// --------------------------------------------------
+
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+})
+
+renderer.setSize(window.innerWidth, window.innerHeight)
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+document.body.appendChild(renderer.domElement)
+
+// --------------------------------------------------
+// 4. Куб
+// --------------------------------------------------
+
+const cubeGeometry = new THREE.BoxGeometry(2, 2, 2)
+
+const cubeMaterial = new THREE.MeshStandardMaterial({
+  color: 0x6fa8dc,
+  transparent: true,
+  opacity: 0.45,
+  side: THREE.DoubleSide,
+})
+
+const cube = new THREE.Mesh(cubeGeometry, cubeMaterial)
+
+scene.add(cube)
+
+// --------------------------------------------------
+// 5. Рёбра куба
+// --------------------------------------------------
+
+const edgesGeometry = new THREE.EdgesGeometry(cubeGeometry)
+
+const edgesMaterial = new THREE.LineBasicMaterial({
+  color: 0x222222,
+})
+
+const edges = new THREE.LineSegments(
+  edgesGeometry,
+  edgesMaterial
+)
+
+scene.add(edges)
+
+// --------------------------------------------------
+// 6. Освещение
+// --------------------------------------------------
+
+const ambientLight = new THREE.AmbientLight(
+  0xffffff,
+  1.5
+)
+
+scene.add(ambientLight)
+
+const directionalLight = new THREE.DirectionalLight(
+  0xffffff,
+  2
+)
+
+directionalLight.position.set(5, 5, 5)
+
+scene.add(directionalLight)
+
+// --------------------------------------------------
+// 7. Управление камерой
+// --------------------------------------------------
+
+const controls = new OrbitControls(
+  camera,
+  renderer.domElement
+)
+
+controls.enableDamping = true
+controls.dampingFactor = 0.05
+
+controls.target.set(0, 0, 0)
+
+// --------------------------------------------------
+// 8. Изменение размера окна
+// --------------------------------------------------
+
+window.addEventListener('resize', () => {
+  camera.aspect =
+    window.innerWidth / window.innerHeight
+
+  camera.updateProjectionMatrix()
+
+  renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+  )
+})
+
+// --------------------------------------------------
+// 9. Цикл рендеринга
+// --------------------------------------------------
+
+function animate() {
+  controls.update()
+
+  renderer.render(scene, camera)
+
+  requestAnimationFrame(animate)
+}
+
+animate()
