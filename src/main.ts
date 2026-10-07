@@ -2,6 +2,10 @@ import './style.css'
 
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import {
+  CSS2DObject,
+  CSS2DRenderer,
+} from 'three/addons/renderers/CSS2DRenderer.js'
 
 // --------------------------------------------------
 // 1. Сцена
@@ -32,6 +36,22 @@ const renderer = new THREE.WebGLRenderer({
   antialias: true,
 })
 
+const labelRenderer = new CSS2DRenderer()
+
+labelRenderer.setSize(
+  window.innerWidth,
+  window.innerHeight
+)
+
+labelRenderer.domElement.style.position = 'absolute'
+labelRenderer.domElement.style.top = '0'
+labelRenderer.domElement.style.left = '0'
+labelRenderer.domElement.style.pointerEvents = 'none'
+
+document.body.appendChild(
+  labelRenderer.domElement
+)
+
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
@@ -40,6 +60,25 @@ document.body.appendChild(renderer.domElement)
 // --------------------------------------------------
 // 4. Куб
 // --------------------------------------------------
+
+type Vertex = {
+  name: string
+  position: THREE.Vector3
+}
+
+const vertices: Vertex[] = [
+  // Нижняя грань
+  { name: 'A', position: new THREE.Vector3(-1, -1,  1) },
+  { name: 'B', position: new THREE.Vector3( 1, -1,  1) },
+  { name: 'C', position: new THREE.Vector3( 1, -1, -1) },
+  { name: 'D', position: new THREE.Vector3(-1, -1, -1) },
+
+  // Верхняя грань
+  { name: 'A1', position: new THREE.Vector3(-1,  1,  1) },
+  { name: 'B1', position: new THREE.Vector3( 1,  1,  1) },
+  { name: 'C1', position: new THREE.Vector3( 1,  1, -1) },
+  { name: 'D1', position: new THREE.Vector3(-1,  1, -1) },
+]
 
 const cubeGeometry = new THREE.BoxGeometry(2, 2, 2)
 
@@ -70,6 +109,49 @@ const edges = new THREE.LineSegments(
 )
 
 scene.add(edges)
+
+const vertexGeometry = new THREE.SphereGeometry(
+  0.06,
+  16,
+  16
+)
+
+const vertexMaterial = new THREE.MeshBasicMaterial({
+  color: 0x111111,
+})
+
+vertices.forEach((vertex) => {
+  // Точка вершины
+
+  const point = new THREE.Mesh(
+    vertexGeometry,
+    vertexMaterial
+  )
+
+  point.position.copy(vertex.position)
+
+  scene.add(point)
+
+  // Подпись вершины
+
+  const labelElement =
+    document.createElement('div')
+
+  labelElement.className = 'vertex-label'
+  labelElement.textContent = vertex.name
+
+  const label = new CSS2DObject(
+    labelElement
+  )
+
+  label.position.copy(vertex.position)
+
+  label.position.add(
+    new THREE.Vector3(0, 0.12, 0)
+  )
+
+  scene.add(label)
+})
 
 // --------------------------------------------------
 // 6. Освещение
@@ -119,6 +201,11 @@ window.addEventListener('resize', () => {
     window.innerWidth,
     window.innerHeight
   )
+
+  labelRenderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+  )
 })
 
 // --------------------------------------------------
@@ -129,6 +216,7 @@ function animate() {
   controls.update()
 
   renderer.render(scene, camera)
+  labelRenderer.render(scene, camera)
 
   requestAnimationFrame(animate)
 }

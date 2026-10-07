@@ -17,3 +17,15 @@ body {
 canvas {
   display: block;
 }
+
+.vertex-label {
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+
+  color: #111;
+
+  user-select: none;
+
+  padding: 2px 4px;
+}
