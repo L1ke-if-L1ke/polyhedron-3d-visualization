@@ -1,5 +1,6 @@
 import './style.css'
 import { createCube } from './geometry/cube'
+import { createPolyhedronMesh } from './rendering/polyhedronRenderer'
 
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
@@ -71,18 +72,13 @@ const cubeModel = createCube()
 
 const vertices = cubeModel.vertices
 
-const cubeGeometry = new THREE.BoxGeometry(2, 2, 2)
+// --------------------------------------------------
+// Поверхности куба из математической модели
+// --------------------------------------------------
 
-const cubeMaterial = new THREE.MeshStandardMaterial({
-  color: 0x6fa8dc,
-  transparent: true,
-  opacity: 0.45,
-  side: THREE.DoubleSide,
-})
+const cubeMesh = createPolyhedronMesh(cubeModel)
 
-const cube = new THREE.Mesh(cubeGeometry, cubeMaterial)
-
-scene.add(cube)
+scene.add(cubeMesh)
 
 // --------------------------------------------------
 // 5. Рёбра куба
