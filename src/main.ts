@@ -1,4 +1,5 @@
 import './style.css'
+import { createCube } from './geometry/cube'
 
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
@@ -66,19 +67,9 @@ type Vertex = {
   position: THREE.Vector3
 }
 
-const vertices: Vertex[] = [
-  // Нижняя грань
-  { name: 'A', position: new THREE.Vector3(-1, -1,  1) },
-  { name: 'B', position: new THREE.Vector3( 1, -1,  1) },
-  { name: 'C', position: new THREE.Vector3( 1, -1, -1) },
-  { name: 'D', position: new THREE.Vector3(-1, -1, -1) },
+const cubeModel = createCube()
 
-  // Верхняя грань
-  { name: 'A1', position: new THREE.Vector3(-1,  1,  1) },
-  { name: 'B1', position: new THREE.Vector3( 1,  1,  1) },
-  { name: 'C1', position: new THREE.Vector3( 1,  1, -1) },
-  { name: 'D1', position: new THREE.Vector3(-1,  1, -1) },
-]
+const vertices = cubeModel.vertices
 
 const cubeGeometry = new THREE.BoxGeometry(2, 2, 2)
 
@@ -97,7 +88,31 @@ scene.add(cube)
 // 5. Рёбра куба
 // --------------------------------------------------
 
-const edgesGeometry = new THREE.EdgesGeometry(cubeGeometry)
+const edgePoints: THREE.Vector3[] = []
+
+cubeModel.edges.forEach((edge) => {
+  const startVertex = cubeModel.vertices.find(
+    (vertex) => vertex.name === edge.start
+  )
+
+  const endVertex = cubeModel.vertices.find(
+    (vertex) => vertex.name === edge.end
+  )
+
+  if (!startVertex || !endVertex) {
+    throw new Error(
+      `Не найдены вершины ребра ${edge.start}-${edge.end}`
+    )
+  }
+
+  edgePoints.push(
+    startVertex.position,
+    endVertex.position
+  )
+})
+
+const edgesGeometry = new THREE.BufferGeometry()
+  .setFromPoints(edgePoints)
 
 const edgesMaterial = new THREE.LineBasicMaterial({
   color: 0x222222,
@@ -110,6 +125,10 @@ const edges = new THREE.LineSegments(
 
 scene.add(edges)
 
+// --------------------------------------------------
+// Вершины куба и их подписи
+// --------------------------------------------------
+
 const vertexGeometry = new THREE.SphereGeometry(
   0.06,
   16,
@@ -120,38 +139,30 @@ const vertexMaterial = new THREE.MeshBasicMaterial({
   color: 0x111111,
 })
 
-vertices.forEach((vertex) => {
-  // Точка вершины
-
+cubeModel.vertices.forEach((vertex) => {
+  // Отображаем вершину
   const point = new THREE.Mesh(
     vertexGeometry,
     vertexMaterial
   )
 
   point.position.copy(vertex.position)
-
   scene.add(point)
 
-  // Подпись вершины
-
-  const labelElement =
-    document.createElement('div')
+  // Создаём подпись вершины
+  const labelElement = document.createElement('div')
 
   labelElement.className = 'vertex-label'
   labelElement.textContent = vertex.name
 
-  const label = new CSS2DObject(
-    labelElement
-  )
+  const label = new CSS2DObject(labelElement)
 
   label.position.copy(vertex.position)
-
-  label.position.add(
-    new THREE.Vector3(0, 0.12, 0)
-  )
+  label.position.y += 0.12
 
   scene.add(label)
 })
+
 
 // --------------------------------------------------
 // 6. Освещение
